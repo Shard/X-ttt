@@ -6,26 +6,19 @@ import TweenMax from 'gsap'
 
 import rand_arr_elem from '../../helpers/rand_arr_elem'
 import rand_to_fro from '../../helpers/rand_to_fro'
+import { minimax, WIN_CONDITIONS } from '../../helpers/minimax'
 
 export default class SetName extends Component {
 
 	constructor (props) {
 		super(props)
+		this.win_sets = WIN_CONDITIONS
+        this.resetGame()
+	}
 
-		this.win_sets = [
-			['c1', 'c2', 'c3'],
-			['c4', 'c5', 'c6'],
-			['c7', 'c8', 'c9'],
+//	------------------------	------------------------	------------------------
 
-			['c1', 'c4', 'c7'],
-			['c2', 'c5', 'c8'],
-			['c3', 'c6', 'c9'],
-
-			['c1', 'c5', 'c9'],
-			['c3', 'c5', 'c7']
-		]
-
-
+    resetGame(){
 		if (this.props.game_type != 'live')
 			this.state = {
 				cell_vals: {},
@@ -43,7 +36,7 @@ export default class SetName extends Component {
 				game_stat: 'Connecting'
 			}
 		}
-	}
+    }
 
 //	------------------------	------------------------	------------------------
 
@@ -140,9 +133,10 @@ export default class SetName extends Component {
 					</tbody>
 					</table>
 				</div>
-
-				<button type='submit' onClick={this.end_game.bind(this)} className='button'><span>End Game <span className='fa fa-caret-right'></span></span></button>
-
+              <div>
+                <button type='submit' onClick={this.end_game.bind(this)} className='button'><span>End Game <span className='fa fa-caret-right'></span></span></button>
+                <button type='submit' onClick={this.rematch.bind(this)} className='button'><span>Rematch <span className='fa fa-caret-right'></span></span></button>
+              </div>
 			</div>
 		)
 	}
@@ -196,16 +190,17 @@ export default class SetName extends Component {
 		let { cell_vals } = this.state
 		let empty_cells_arr = []
 
-
 		for (let i=1; i<=9; i++) 
 			!cell_vals['c'+i] && empty_cells_arr.push('c'+i)
-		// console.log(cell_vals, empty_cells_arr, rand_arr_elem(empty_cells_arr))
 
-		const c = rand_arr_elem(empty_cells_arr)
-		cell_vals[c] = 'o'
+        // Determine the best move for the computer using minimax
+		const {cell} = minimax( Object.assign({}, cell_vals) , empty_cells_arr, 'o')
+		cell_vals[cell] = 'o'
 
-		TweenMax.from(this.refs[c], 0.7, {opacity: 0, scaleX:0, scaleY:0, ease: Power4.easeOut})
+        // Pick a random cell to play for the computer
+		// const cell = rand_arr_elem(empty_cells_arr)
 
+		TweenMax.from(this.refs[cell], 0.7, {opacity: 0, scaleX:0, scaleY:0, ease: Power4.easeOut})
 
 		// this.setState({
 		// 	cell_vals: cell_vals,
@@ -338,6 +333,16 @@ export default class SetName extends Component {
 		this.props.onEndGame()
 	}
 
+//	------------------------	------------------------	------------------------
+
+    rematch () {
+        console.log(this.refs)
+        for(const [i, element] of Object.entries(this.refs)){
+            element.classList.remove('win')
+        }
+        this.resetGame()
+        this.props.onRematch()
+    }
 
 
 }
